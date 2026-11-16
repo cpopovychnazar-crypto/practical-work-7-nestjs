@@ -1,82 +1,100 @@
 
-# Практична робота №9
-## Реалізація автентифікації та рольової авторизації
+# Практична робота № 8
 
-**Студент:** Попович Назар Сергійович  
-**Група:** КН-42  
-**Варіант:** 10  
-**Рівень:** 1
+## Тема: Моделювання зв'язків між сутностями та керування міграціями
 
-## 1. Опис проєкту
+**Варіант:** 10 — Зоотовари  
+**Рівень виконання:** Рівень 1  
+**Технології:** NestJS, TypeScript, TypeORM, PostgreSQL, Docker
 
-Розроблено серверний застосунок на NestJS для предметної області «Зоотовари».
+## 1. Мета роботи
 
-Проєкт реалізує базову систему автентифікації користувачів із використанням bcrypt та JSON Web Token (JWT).
+Навчитися моделювати зв'язки між сутностями за допомогою TypeORM, налаштовувати міграції бази даних, створювати DataSource та отримувати пов'язані дані через REST API.
 
-### Ролі користувачів
+## 2. Опис проєкту
 
-- `ADMIN` — адміністратор.
-- `VET_CONSULTANT` — ветеринарний консультант.
-- `PET_OWNER` — власник домашньої тварини.
+Проєкт є бекендом інтернет-магазину зоотоварів.
 
-Під час стандартної реєстрації користувачеві автоматично призначається роль `PET_OWNER`.
+У межах практичної роботи реалізовано зв'язок між двома сутностями:
 
-## 2. Використані технології
+- `PetSupplyEntity` — товар зоомагазину.
+- `AnimalTypeEntity` — вид тварини.
 
-- Node.js
-- TypeScript
-- NestJS
-- PostgreSQL
-- TypeORM
-- Docker та Docker Compose
-- bcrypt
-- @nestjs/jwt
-- @nestjs/passport
-- passport-jwt
-- Postman
+Для моделювання зв'язку використано:
+- `@ManyToOne()` — зв'язок багато-до-одного.
+- `@OneToMany()` — зворотний зв'язок один-до-багатьох.
+- `@JoinColumn()` — визначення зовнішнього ключа `animal_type_id`.
 
-## 3. Реалізована функціональність (Рівень 1)
-
-- Створення сутності `UserEntity`.
-- Реєстрація користувачів.
-- Перевірка коректності email.
-- Перевірка мінімальної довжини пароля (6 символів).
-- Перевірка унікальності email.
-- Хешування паролів за допомогою bcrypt (10 salt rounds).
-- Авторизація користувачів за email і паролем.
-- Генерація JWT Access Token.
-- Створення `JwtStrategy`.
-- Створення `JwtAuthGuard`.
-- Захист маршруту `GET /auth/me`.
-- Повернення профілю без поля `passwordHash`.
-
-## 4. Структура проєкту
+## 3. Структура проєкту
 
 ```text
 src/
-├── auth/
-│   ├── jwt-auth/
-│   │   └── jwt-auth.guard.ts
-│   ├── auth.controller.ts
-│   ├── auth.module.ts
-│   ├── auth.service.ts
-│   └── jwt.strategy.ts
-├── users/
+├── database/
+│   ├── migrations/
+│   │   └── 1794838603046-AddAnimalTypeRelation.ts
+│   └── data-source.ts
+│
+├── pet-supplies/
+│   ├── dto/
 │   ├── entities/
-│   │   └── user.entity.ts
-│   └── users.module.ts
-├── app.module.ts
-└── main.ts
+│   │   ├── animal-type.entity.ts
+│   │   └── pet-supply.entity.ts
+│   ├── pet-supplies.controller.ts
+│   ├── pet-supplies.module.ts
+│   └── pet-supplies.service.ts
+│
+├── auth/
+├── users/
+└── app.module.ts
 ```
 
-## 5. Налаштування та запуск
+## 4. Реалізований функціонал
+
+### 4.1. Налаштування TypeORM
+
+Створено файл `src/database/data-source.ts` для конфігурації підключення до PostgreSQL та керування міграціями.
+
+У `app.module.ts` вимкнено автоматичну синхронізацію структури бази даних:
+
+```typescript
+synchronize: false
+```
+
+### 4.2. Зв'язок One-to-Many / Many-to-One
+
+У `PetSupplyEntity` реалізовано зв'язок із `AnimalTypeEntity` через `@ManyToOne()`.
+
+У `AnimalTypeEntity` реалізовано зворотний зв'язок через `@OneToMany()`.
+
+Зовнішній ключ: `animal_type_id`.
+
+### 4.3. Міграції
+
+Створено та успішно застосовано міграцію:
+
+`1794838603046-AddAnimalTypeRelation.ts`
+
+Міграція створює таблицю `animal_types`, додає поле `animal_type_id` до таблиці `pet_supplies` та встановлює зовнішній ключ.
+
+### 4.4. REST API
+
+Реалізовано маршрути:
+
+| Метод | Endpoint | Призначення |
+|---|---|---|
+| GET | `/pet-supplies` | Отримання всіх товарів |
+| GET | `/pet-supplies/:id` | Отримання товару за UUID разом із пов'язаним видом тварини |
+
+Для завантаження пов'язаних даних використовується параметр `relations`.
+
+## 5. Інструкція запуску
 
 ### Вимоги
 
-- Node.js 18 або новіший.
-- npm.
-- Docker Desktop.
-- PostgreSQL через Docker Compose.
+- Node.js 22+
+- npm
+- Docker Desktop
+- PostgreSQL 16
 
 ### Встановлення залежностей
 
@@ -84,20 +102,13 @@ src/
 npm install
 ```
 
-### Запуск бази даних
+### Запуск PostgreSQL
 
 ```bash
 docker compose up -d
 ```
 
-PostgreSQL використовує такі параметри:
-
-- Host: `127.0.0.1`
-- Port: `5433`
-- Database: `store_db`
-- Username: `nest_user`
-
-### Запуск застосунку
+### Запуск NestJS
 
 ```bash
 npm run start:dev
@@ -107,70 +118,47 @@ npm run start:dev
 
 `http://localhost:3000`
 
-### Перевірка компіляції
+### Генерація міграції
 
-```bash
-npm run build
+```powershell
+node -r ts-node/register ./node_modules/typeorm/cli.js migration:generate src/database/migrations/AddAnimalTypeRelation -d src/database/data-source.ts
 ```
 
-## 6. API маршрути
+### Застосування міграцій
 
-| Метод | Маршрут | Призначення |
-|---|---|---|
-| POST | `/auth/register` | Реєстрація користувача |
-| POST | `/auth/login` | Вхід та отримання JWT |
-| GET | `/auth/me` | Отримання профілю авторизованого користувача |
-
-### Приклад реєстрації
-
-POST `/auth/register`
-
-```json
-{
-  "email": "test@example.com",
-  "password": "123456"
-}
+```powershell
+node -r ts-node/register ./node_modules/typeorm/cli.js migration:run -d src/database/data-source.ts
 ```
 
-### Приклад входу
+## 6. Результати тестування
 
-POST `/auth/login`
+У PostgreSQL створено таблиці:
 
-```json
-{
-  "email": "test@example.com",
-  "password": "123456"
-}
-```
+- `pet_supplies`
+- `animal_types`
+- `users`
+- `migrations`
 
-У відповідь сервер повертає JWT Access Token.
+Для перевірки додано тестові види тварин: «Собаки» та «Коти», а також тестовий товар «Сухий корм для собак».
 
-### Отримання профілю
+GET-запит за UUID успішно повернув товар разом із вкладеним об'єктом `animalType`.
 
-GET `/auth/me`
+## 7. Скріншоти роботи програми
 
-Для запиту необхідно передати заголовок:
+Додати скриншоти до папки `docs/screenshots/`.
 
-`Authorization: Bearer <access_token>`
-
-## 7. Результати тестування
-
-Перевірено такі сценарії:
-
-| Сценарій | Результат |
-|---|---|
-| Успішна реєстрація | 201 Created |
-| Успішний вхід | 201 Created |
-| Отримання профілю | 200 OK |
-| Неправильний пароль | 401 Unauthorized |
-| Повторний email | 409 Conflict |
+1. `01-nestjs-running.png` — успішний запуск NestJS без помилок.
+2. `02-migration-generated.png` — успішна генерація міграції.
+3. `03-migration-run.png` — успішне застосування міграції.
+4. `04-database-tables.png` — таблиці PostgreSQL.
+5. `05-api-response.png` — відповідь GET-запиту з вкладеним `animalType`.
 
 ## 8. Висновок
 
-Під час виконання практичної роботи №9 реалізовано базову систему автентифікації користувачів у NestJS.
+Під час виконання практичної роботи №8 було налаштовано TypeORM DataSource, вимкнено автоматичну синхронізацію структури бази даних та реалізовано керування міграціями PostgreSQL.
 
-Налаштовано збереження користувачів у PostgreSQL, хешування паролів за допомогою bcrypt, генерацію JWT Access Token та захист маршруту профілю за допомогою Passport JWT.
+Для предметної області інтернет-магазину зоотоварів створено зв'язок One-to-Many / Many-to-One між сутностями `PetSupplyEntity` та `AnimalTypeEntity`.
 
-Роботу виконано відповідно до вимог Рівня 1 практичної роботи.
+Успішно згенеровано та застосовано міграцію. Реалізовано REST API для отримання товарів із пов'язаними даними. Роботу зв'язку перевірено на тестових записах.
 
-**Рівні 2 та 3 не реалізовувалися.**
+Практичну роботу виконано на базовому рівні — рівень 1.

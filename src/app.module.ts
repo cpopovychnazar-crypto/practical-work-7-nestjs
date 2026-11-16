@@ -17,7 +17,7 @@ import { AuthModule } from './auth/auth.module';
       password: 'nest_password',
       database: 'store_db',
       autoLoadEntities: true,
-      synchronize: true,
+      synchronize: false,
     }),
     PetSuppliesModule,
     UsersModule,

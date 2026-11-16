@@ -5,14 +5,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
-
-export enum PetCategory {
-  CAT = 'CAT',
-  DOG = 'DOG',
-  BIRD = 'BIRD',
-  FISH = 'FISH',
-}
+import { AnimalTypeEntity } from './animal-type.entity';
 
 @Entity('pet_supplies')
 export class PetSupplyEntity {
@@ -25,11 +21,13 @@ export class PetSupplyEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
-  @Column({
-    type: 'enum',
-    enum: PetCategory,
-  })
-  petCategory: PetCategory;
+  @ManyToOne(
+    () => AnimalTypeEntity,
+    (animalType) => animalType.petSupplies,
+    { nullable: true, onDelete: 'RESTRICT' },
+  )
+  @JoinColumn({ name: 'animal_type_id' })
+  animalType: AnimalTypeEntity;
 
   @Column({ type: 'decimal', precision: 6, scale: 2 })
   packageWeightKg: number;
