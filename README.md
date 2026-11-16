@@ -1,90 +1,176 @@
 
-# Practical Work No. 6
-## Input Validation and Request Handling in NestJS
+# Практична робота №9
+## Реалізація автентифікації та рольової авторизації
 
-**Student:** Popovych Nazar Serhiiovych  
-**Group:** KN-42  
-**Variant:** 10 — Pet Supplies
+**Студент:** Попович Назар Сергійович  
+**Група:** КН-42  
+**Варіант:** 10  
+**Рівень:** 1
 
-## Project Description
+## 1. Опис проєкту
 
-This project demonstrates input validation and request handling in a NestJS application for managing pet supplies.
+Розроблено серверний застосунок на NestJS для предметної області «Зоотовари».
 
-The application supports creating, retrieving, and updating pet supply products.
+Проєкт реалізує базову систему автентифікації користувачів із використанням bcrypt та JSON Web Token (JWT).
 
-## Technologies
+### Ролі користувачів
+
+- `ADMIN` — адміністратор.
+- `VET_CONSULTANT` — ветеринарний консультант.
+- `PET_OWNER` — власник домашньої тварини.
+
+Під час стандартної реєстрації користувачеві автоматично призначається роль `PET_OWNER`.
+
+## 2. Використані технології
 
 - Node.js
 - TypeScript
 - NestJS
-- class-validator
-- class-transformer
+- PostgreSQL
+- TypeORM
+- Docker та Docker Compose
+- bcrypt
+- @nestjs/jwt
+- @nestjs/passport
+- passport-jwt
+- Postman
 
-## Implemented Features
+## 3. Реалізована функціональність (Рівень 1)
 
-- Global ValidationPipe configuration.
-- DTO validation using class-validator.
-- Required field validation.
-- String and number type validation.
-- Positive price validation.
-- Minimum package weight validation.
-- Optional fields for product updates.
-- Rejection of unknown properties.
-- HTTP 400 Bad Request responses for invalid data.
-- GET, POST and PATCH endpoints.
+- Створення сутності `UserEntity`.
+- Реєстрація користувачів.
+- Перевірка коректності email.
+- Перевірка мінімальної довжини пароля (6 символів).
+- Перевірка унікальності email.
+- Хешування паролів за допомогою bcrypt (10 salt rounds).
+- Авторизація користувачів за email і паролем.
+- Генерація JWT Access Token.
+- Створення `JwtStrategy`.
+- Створення `JwtAuthGuard`.
+- Захист маршруту `GET /auth/me`.
+- Повернення профілю без поля `passwordHash`.
 
-## Validation Configuration
+## 4. Структура проєкту
 
-The global ValidationPipe uses:
+```text
+src/
+├── auth/
+│   ├── jwt-auth/
+│   │   └── jwt-auth.guard.ts
+│   ├── auth.controller.ts
+│   ├── auth.module.ts
+│   ├── auth.service.ts
+│   └── jwt.strategy.ts
+├── users/
+│   ├── entities/
+│   │   └── user.entity.ts
+│   └── users.module.ts
+├── app.module.ts
+└── main.ts
+```
 
-- `whitelist: true`
-- `forbidNonWhitelisted: true`
-- `transform: true`
+## 5. Налаштування та запуск
 
-## API Endpoints
+### Вимоги
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | /pet-supplies | Get all products |
-| GET | /pet-supplies/:id | Get product by ID |
-| POST | /pet-supplies | Create a product |
-| PATCH | /pet-supplies/:id | Update a product |
+- Node.js 18 або новіший.
+- npm.
+- Docker Desktop.
+- PostgreSQL через Docker Compose.
 
-## Installation
+### Встановлення залежностей
 
 ```bash
 npm install
 ```
 
-## Run the Application
+### Запуск бази даних
+
+```bash
+docker compose up -d
+```
+
+PostgreSQL використовує такі параметри:
+
+- Host: `127.0.0.1`
+- Port: `5433`
+- Database: `store_db`
+- Username: `nest_user`
+
+### Запуск застосунку
 
 ```bash
 npm run start:dev
 ```
 
-The application runs at:
+Сервер запускається за адресою:
 
-http://localhost:3000
+`http://localhost:3000`
 
-## Build
+### Перевірка компіляції
 
 ```bash
-npx nest build
+npm run build
 ```
 
-## Validation Testing
+## 6. API маршрути
 
-The following scenarios were tested:
+| Метод | Маршрут | Призначення |
+|---|---|---|
+| POST | `/auth/register` | Реєстрація користувача |
+| POST | `/auth/login` | Вхід та отримання JWT |
+| GET | `/auth/me` | Отримання профілю авторизованого користувача |
 
-1. Successful product creation.
-2. Invalid title type.
-3. Negative product price.
-4. Invalid package weight type.
-5. Empty brand.
-6. Unknown property rejection.
-7. Successful partial product update.
-8. Rejection of negative price during update.
+### Приклад реєстрації
 
-## Conclusion
+POST `/auth/register`
 
-The project demonstrates input validation and request handling in NestJS using DTOs, class-validator, class-transformer, and the global ValidationPipe.
+```json
+{
+  "email": "test@example.com",
+  "password": "123456"
+}
+```
+
+### Приклад входу
+
+POST `/auth/login`
+
+```json
+{
+  "email": "test@example.com",
+  "password": "123456"
+}
+```
+
+У відповідь сервер повертає JWT Access Token.
+
+### Отримання профілю
+
+GET `/auth/me`
+
+Для запиту необхідно передати заголовок:
+
+`Authorization: Bearer <access_token>`
+
+## 7. Результати тестування
+
+Перевірено такі сценарії:
+
+| Сценарій | Результат |
+|---|---|
+| Успішна реєстрація | 201 Created |
+| Успішний вхід | 201 Created |
+| Отримання профілю | 200 OK |
+| Неправильний пароль | 401 Unauthorized |
+| Повторний email | 409 Conflict |
+
+## 8. Висновок
+
+Під час виконання практичної роботи №9 реалізовано базову систему автентифікації користувачів у NestJS.
+
+Налаштовано збереження користувачів у PostgreSQL, хешування паролів за допомогою bcrypt, генерацію JWT Access Token та захист маршруту профілю за допомогою Passport JWT.
+
+Роботу виконано відповідно до вимог Рівня 1 практичної роботи.
+
+**Рівні 2 та 3 не реалізовувалися.**
